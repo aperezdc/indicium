@@ -49,3 +49,101 @@ class TestNullStore(unittest.TestCase, TestStoreMethodsMixin):
         self.s = NullStore()
     def tearDown(self):
         self.s = None
+
+    def test_null(self):
+        for k in (str(c) for c in range(1, 20)):
+            self.assertFalse(self.s.contains(k))
+            self.assertIsNone(self.s.get(k))
+            self.s.put(k, k)
+            self.assertFalse(self.s.contains(k))
+            self.assertIsNone(self.s.get(k))
+        self.assertEqual([], list(self.s.query("*")))
+
+
+class TestStoreOperationsMixin(object):
+    def test_remove_nonexistent(self):
+        self.assertEqual([], list(self.s.query("*")))
+        self.assertFalse(self.s.contains("/foo"))
+        self.s.delete("/foo")
+        self.assertEqual([], list(self.s.query("*")))
+        self.assertFalse(self.s.contains("/foo"))
+
+    def test_insert_elements(self):
+        num_elements = getattr(self, "num_elements", 10)
+        for value in range(0, num_elements):
+            v = str(value)
+            k = "/" + v
+            self.assertFalse(self.s.contains(k))
+            self.s.put(k, v)
+            self.assertTrue(self.s.contains(k))
+            self.assertEqual(v, self.s.get(k))
+        self.assertEqual(num_elements,
+                len(list(self.s.query("*"))))
+
+    def add_items(self):
+        d = {"/foo": "1", "/bar": "2", "/baz": "3", "/ftw": "4"}
+        [self.s.put(k, v) for k, v in d.items()]
+        return d
+
+    def test_query_all(self):
+        d = self.add_items()
+        self.assertEqual(d, dict(self.s.query("*")))
+
+    def test_query_prefix_namespace(self):
+        self.add_items()
+        self.assertEqual({"/foo": "1", "/ftw": "4"},
+                dict(self.s.query("/f*")))
+
+    def test_query_letter_match(self):
+        self.add_items()
+        self.assertEqual({"/bar": "2", "/baz": "3"},
+                dict(self.s.query("/?a?")))
+
+    def test_query_limit(self):
+        self.add_items()
+        self.assertEqual({"/bar": "2", "/baz": "3"},
+                dict(self.s.query("*", limit=2)))
+
+    def test_query_offset(self):
+        self.add_items()
+        self.assertEqual({"/foo": "1", "/ftw": "4"},
+                dict(self.s.query("*", offset=2)))
+
+    def test_query_limit_and_offset(self):
+        self.add_items()
+        self.assertEqual({"/foo": "1"},
+                dict(self.s.query("*", offset=2, limit=1)))
+
+    def test_update(self):
+        self.test_insert_elements()
+        num_elements = getattr(self, "num_elements", 10)
+        for value in range(0, num_elements):
+            k = "/" + str(value)
+            v = str(value + 1)
+            self.assertTrue(self.s.contains(k))
+            self.s.put(k, v)
+            self.assertNotEqual(str(value), self.s.get(k))
+            self.assertEqual(v, self.s.get(k))
+        self.assertEqual(num_elements, len(list(self.s.query("*"))))
+
+    def test_remove(self):
+        self.test_insert_elements()
+        num_elements = getattr(self, "num_elements", 10)
+        for value in range(0, num_elements):
+            k = "/" + str(value)
+            self.assertTrue(self.s.contains(k))
+            self.assertIsNotNone(self.s.get(k))
+            self.s.delete(k)
+            self.assertFalse(self.s.contains(k))
+            self.assertIsNone(self.s.get(k))
+        self.assertEqual(0, len(list(self.s.query("*"))))
+
+
+class TestDictStore(unittest.TestCase,
+        TestStoreMethodsMixin,
+        TestStoreOperationsMixin):
+    def setUp(self):
+        from indicium.base import DictStore
+        self.s = DictStore()
+    def tearDown(self):
+        self.s = None

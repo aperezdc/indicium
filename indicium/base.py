@@ -7,6 +7,9 @@
 # Distributed under terms of the MIT license.
 
 from abc import ABC, abstractmethod
+from itertools import islice
+import fnmatch, re
+from .key import normalize
 
 
 class Store(ABC):
@@ -43,30 +46,21 @@ class Store(ABC):
     @abstractmethod
     def query(self, pattern, limit=None, offset=0):
         """
-        Iterate over the key-value pairs of keys matching a glob pattern.
+        Iterate over the key-value pairs of keys matching a ``fnmatch`` pattern.
 
-        The `pattern` is used to match keys, and it may contain the following
+        The `pattern` is a ``fnmatch``-style pattern, and it is used to filter
+        elements by matching their keys.
         specifiers:
-
-        - ``*`` matches any number of characters, *except for slashes*.
-        - ``**`` matches any number of characters, *including slashes*.
-
-        It is possible to escape asterisk characters, using ``\*``, in
-        which case the asterisk loses its meaning as a specifier and it will
-        be matched literally. Also, note that to match a literal backslash
-        character, you need to use ``\\\\`` (double backslash).
 
         The main use-case for pattern specifiers is enumerating and retrieving
         sets of values which share a common key prefix. This is a common
         pattern: related values are all stored using keys with a common
         prefix, for example where each user of a system has ``/user/`` at
-        the beginning of its key, plus an unique identifier, then one can
-        enumerate all the users with a the query pattern ``/user/*``  (or
-        ``/user/**`` if there are multiple slash-separated *levels* in the
-        keys).
+        the beginning of its key, then one can enumerate all the users
+        with the query pattern ``/user/*``.
 
         :param pattern:
-            Query pattern.
+            A ``fnmatch``-style pattern, as a string.
         :param limit:
             Maximum number of elements returned by the query. Using `None`
             returns *all* the matched elements.
@@ -105,3 +99,61 @@ class NullStore(Store):
 
     def query(self, limit=None, offset=0):
         return ()
+
+
+def query_iterable(iterable, pattern, limit=None, offset=0):
+    """
+    Takes an iterable over key-value pairs and applies query filtering.
+
+    :param iterable:
+        An iterable which yields *(key, value)* pairs.
+    :param pattern:
+        A ``fnmatch``-style pattern.
+    :param limit:
+        Maximum number of result elements.
+    :param offset:
+        Index of the first result element.
+    """
+    pattern = normalize(pattern)
+
+    # Only apply the filtering when *not* iterating over all the elements.
+    # That is, when the query pattern is other than "/**" or an equivalent.
+    if pattern != "/*":
+        match = re.compile(fnmatch.translate(pattern), re.DOTALL).match
+        iterable = ((k, v) for (k, v) in iter(iterable) if match(k))
+    # Apply limit/offset. Note that sorting the keys is only needed when
+    # limits are imposed to guarantee that pagination will be work.
+    if limit is None:
+        if offset > 0:
+            iterable = islice(sorted(iterable, key=lambda x: x[0]), offset, None)
+    else:
+        iterable = islice(sorted(iterable, key=lambda x: x[0]), offset, offset + limit)
+    return iterable
+
+
+class DictStore(Store):
+    """
+    Simple in-memory store using dictionaries as backend.
+    """
+    __slots__ = ("_items",)
+
+    def __init__(self):
+        self._items = {}
+
+    def get(self, key):
+        return self._items.get(normalize(key), None)
+
+    def put(self, key, value):
+        self._items[normalize(key)] = value
+
+    def delete(self, key):
+        try:
+            del self._items[normalize(key)]
+        except KeyError as e:
+            pass
+
+    def contains(self, key):
+        return normalize(key) in self._items
+
+    def query(self, pattern, limit=None, offset=0):
+        return query_iterable(self._items.items(), pattern, limit, offset)

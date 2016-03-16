@@ -131,6 +131,56 @@ def query_iterable(iterable, pattern, limit=None, offset=0):
     return iterable
 
 
+class Shim(Store):
+    __slots__ = ("child",)
+
+    def __init__(self, store:Store):
+        self.child = store
+
+    def get(self, key):
+        return self.child.get(key)
+
+    def put(self, key, value):
+        self.child.put(key, value)
+
+    def delete(self, key):
+        self.child.delete(key)
+
+    def query(self, pattern, limit=None, offset=0):
+        return self.child.query(pattern, limit, offset)
+
+
+class Cache(Shim):
+    """
+    Wraps a store with a caching shim.
+    """
+    __slots__ = ("cache",)
+
+    def __init__(self, store:Store, cache:Store):
+        super(Cache, self).__init__(store)
+        self.cache = cache
+
+    def get(self, key):
+        value = self.cache.get(key)
+        if value is None:
+            value = self.child.get(key)
+            if value is not None:
+                self.cache.put(key, value)
+        return value
+
+    def put(self, key, value):
+        self.cache.put(key, value)
+        self.child.put(key, value)
+
+    def delete(self, key):
+        self.cache.delete(key)
+        self.child.delete(key)
+
+    def contains(self, key):
+        return self.cache.contains(key) \
+            or self.child.contains(key)
+
+
 class DictStore(Store):
     """
     Simple in-memory store using dictionaries as backend.

@@ -147,3 +147,52 @@ class TestDictStore(unittest.TestCase,
         self.s = DictStore()
     def tearDown(self):
         self.s = None
+
+
+class TestShim(unittest.TestCase,
+        TestStoreMethodsMixin,
+        TestStoreOperationsMixin):
+    def setUp(self):
+        from indicium.base import DictStore, Shim
+        self.s = Shim(DictStore())
+    def tearDown(self):
+        self.s = None
+
+
+class TestNullCacheStore(unittest.TestCase,
+        TestStoreMethodsMixin,
+        TestStoreOperationsMixin):
+    def setUp(self):
+        from indicium.base import DictStore, NullStore, Cache
+        self.s = Cache(DictStore(), NullStore())
+    def tearDown(self):
+        self.s = None
+
+
+class TestDictCacheStore(unittest.TestCase,
+        TestStoreMethodsMixin,
+        TestStoreOperationsMixin):
+    def setUp(self):
+        from indicium.base import DictStore, Cache
+        self.s = Cache(DictStore(), DictStore())
+    def tearDown(self):
+        self.s = None
+
+    def test_get_only_in_child(self):
+        self.test_insert_elements()
+        self.s.cache.delete("/5")
+        self.assertTrue(self.s.child.contains("/5"))
+        self.assertFalse(self.s.cache.contains("/5"))
+        self.assertTrue(self.s.contains("/5"))
+        self.assertEqual("5", self.s.get("/5"))
+        self.assertTrue(self.s.cache.contains("/5"))
+
+    def test_update_both(self):
+        self.test_insert_elements()
+        self.s.put("/5", "five")
+        self.assertTrue(self.s.contains("/5"))
+        self.assertTrue(self.s.cache.contains("/5"))
+        self.assertTrue(self.s.child.contains("/5"))
+        self.assertEqual("five", self.s.cache.get("/5"))
+        self.assertEqual("five", self.s.child.get("/5"))
+        self.assertEqual("five", self.s.get("/5"))

@@ -52,7 +52,7 @@ def join(components, *arg):
     if not (isinstance(components, (list, tuple))
             or _isgenerator(components)):
         components = (c for c in components.split("/") if c)
-    return "/" + "/".join(chain(components, arg))
+    return "/" + "/".join(_chain(components, arg))
 
 
 def normalize(key):

@@ -97,6 +97,9 @@ class NullStore(Store):
 
     Stored values are discarded by this store. Mostly useful for testing.
     """
+    def __repr__(self):  # pragma: nocover
+        return "{!s}<{}>".format(self.__class__.__name__, id(self))
+
     def get(self, key):
         return None
 
@@ -160,6 +163,9 @@ class Shim(Store):
     def __init__(self, store:Store):
         self.child = store
 
+    def __repr__(self):  # pragma: nocover
+        return "{!s}({!r})".format(self.__class__.__name__, self.child)
+
     def get(self, key):
         return self.child.get(key)
 
@@ -209,6 +215,10 @@ class Cache(Shim):
         super(Cache, self).__init__(store)
         self.cache = cache
 
+    def __repr__(self):  # pragma: nocover
+        return "{!s}({!r}, cache={!r})".format(
+                self.__class__.__name__, self.child, self.cache)
+
     def get(self, key):
         value = self.cache.get(key)
         if value is None:
@@ -242,6 +252,9 @@ class DictStore(Store):
 
     def __init__(self):
         self._items = {}
+
+    def __repr__(self):  # pragma: nocover
+        return "{!s}({})".format(self.__class__.__name__, id(self._items))
 
     def get(self, key):
         return self._items.get(normalize(key), None)

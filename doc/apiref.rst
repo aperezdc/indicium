@@ -8,6 +8,12 @@
 .. automodule:: indicium.base
    :members:
 
+:mod:`indicium.cache`
+=====================
+
+.. automodule:: indicium.cache
+   :members:
+
 :mod:`indicium.key`
 ===================
 

@@ -11,6 +11,9 @@ import unittest
 
 
 class TestStoreMethodsMixin(object):
+    def tearDown(self):
+        self.s = None
+
     def test_set_method_implemented(self):
         self.assertTrue(hasattr(self.s, "get"))
         self.assertTrue(callable(self.s.get))
@@ -47,8 +50,6 @@ class TestNullStore(unittest.TestCase, TestStoreMethodsMixin):
     def setUp(self):
         from indicium.base import NullStore
         self.s = NullStore()
-    def tearDown(self):
-        self.s = None
 
     def test_null(self):
         for k in (str(c) for c in range(1, 20)):
@@ -145,8 +146,6 @@ class TestDictStore(unittest.TestCase,
     def setUp(self):
         from indicium.base import DictStore
         self.s = DictStore()
-    def tearDown(self):
-        self.s = None
 
 
 class TestShim(unittest.TestCase,
@@ -155,8 +154,6 @@ class TestShim(unittest.TestCase,
     def setUp(self):
         from indicium.base import DictStore, Shim
         self.s = Shim(DictStore())
-    def tearDown(self):
-        self.s = None
 
 
 class TestNullCacheStore(unittest.TestCase,
@@ -165,8 +162,6 @@ class TestNullCacheStore(unittest.TestCase,
     def setUp(self):
         from indicium.base import DictStore, NullStore, Cache
         self.s = Cache(DictStore(), NullStore())
-    def tearDown(self):
-        self.s = None
 
 
 class TestDictCacheStore(unittest.TestCase,
@@ -175,8 +170,6 @@ class TestDictCacheStore(unittest.TestCase,
     def setUp(self):
         from indicium.base import DictStore, Cache
         self.s = Cache(DictStore(), DictStore())
-    def tearDown(self):
-        self.s = None
 
     def test_get_only_in_child(self):
         self.test_insert_elements()

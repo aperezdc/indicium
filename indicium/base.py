@@ -22,6 +22,8 @@ class Store(ABC):
         Return the object named by `key` or `None` if it does not exist.
 
         Store implementations *must* implement this method.
+
+        :param str key: A key.
         """
         raise NotImplementedError  # pragma: nocover
 
@@ -31,6 +33,9 @@ class Store(ABC):
         Stores the object `value` named by `key`.
 
         Store implementations *must* implement this method.
+
+        :param str key: A key.
+        :param value: Value associated to the key.
         """
         raise NotImplementedError  # pragma: nocover
 
@@ -40,6 +45,8 @@ class Store(ABC):
         Removes the object named by `key`.
 
         Store implementations *must* implement this method.
+
+        :param str key: A key.
         """
         raise NotImplementedError  # pragma: nocover
 
@@ -59,12 +66,12 @@ class Store(ABC):
         the beginning of its key, then one can enumerate all the users
         with the query pattern ``/user/*``.
 
-        :param pattern:
+        :param str pattern:
             A ``fnmatch``-style pattern, as a string.
-        :param limit:
+        :param int limit:
             Maximum number of elements returned by the query. Using `None`
             returns *all* the matched elements.
-        :param offset:
+        :param int offset:
             Index of the first element to return.
         :return:
             Iterable which yields *(key, value)* pairs.
@@ -78,6 +85,8 @@ class Store(ABC):
         The default implementation uses :func:`get()` to determine the
         existence of values, therefore store implementations *may* want
         to provide a specialized version of this method.
+
+        :param str key: A key.
         """
         return self.get(key) is not None
 
@@ -107,11 +116,11 @@ def query_iterable(iterable, pattern, limit=None, offset=0):
 
     :param iterable:
         An iterable which yields *(key, value)* pairs.
-    :param pattern:
+    :param str pattern:
         A ``fnmatch``-style pattern.
-    :param limit:
+    :param int limit:
         Maximum number of result elements.
-    :param offset:
+    :param int offset:
         Index of the first result element.
     """
     pattern = normalize(pattern)
@@ -132,6 +141,20 @@ def query_iterable(iterable, pattern, limit=None, offset=0):
 
 
 class Shim(Store):
+    """
+    Wraps a :class:`Store` and delegates all operations to it.
+
+    This can be used as a base class for more complex wrappers, without
+    needing to reimplement all the abstract methods of :class:`Store`.
+
+    :param Store store:
+        The wrapped store object.
+
+    .. attribute:: child
+
+        The wrapped :class:`Store` instance. Changing the value of the
+        attribute after instantiation is discouraged.
+    """
     __slots__ = ("child",)
 
     def __init__(self, store:Store):
@@ -152,7 +175,33 @@ class Shim(Store):
 
 class Cache(Shim):
     """
-    Wraps a store with a caching shim.
+    Wraps a backend store with a caching store.
+
+    Fetching an element will try to fetch the element from the cache first. In
+    case of a cache miss (the element is not found in the cache), the element
+    is searched for in the backend and, if found, added to the cache.
+
+    Storing or deleting an element will perform the operation in both the
+    cache and backend stores.
+
+    Queries are always delegated to the backend store, as it is assumed that
+    cache stores may not contain the all the information needed to perform
+    queries—or they may not support querying at all.
+
+    :param Store store:
+        Store used as backend.
+    :param Store cache:
+        Store used as cache.
+
+    **Properties:**
+
+    .. attribute:: cache
+
+        Store used as cache.
+
+    .. attribute:: child
+
+        Store used as backend.
     """
     __slots__ = ("cache",)
 
@@ -183,7 +232,11 @@ class Cache(Shim):
 
 class DictStore(Store):
     """
-    Simple in-memory store using dictionaries as backend.
+    Simple in-memory store using a dictionary as backend.
+
+    All the elements are kept in memory, and are naïvely stored in a single
+    dictionary. This store should be used for testing and when handling small
+    amounts of transient data.
     """
     __slots__ = ("_items",)
 

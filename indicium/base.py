@@ -178,6 +178,9 @@ class Shim(Store):
     def query(self, pattern, limit=None, offset=0):
         return self.child.query(pattern, limit, offset)
 
+    def contains(self, key):
+        return self.child.contains(key)
+
 
 class Cache(Shim):
     """

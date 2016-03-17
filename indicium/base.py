@@ -276,3 +276,103 @@ class DictStore(Store):
 
     def query(self, pattern, limit=None, offset=0):
         return query_iterable(self._items.items(), pattern, limit, offset)
+
+
+class SerializerShim(Shim):
+    """
+    Abstract class which defines the (de)serialization protocol.
+    """
+    @abstractmethod
+    def loads(self, value):
+        """
+        Deserializes a `value`.
+
+        :param value:
+            Serialized value.
+        :return:
+            Deserialized value.
+        """
+        raise NotImplementedError  # pragma: nocover
+
+    @abstractmethod
+    def dumps(self, value):
+        """
+        Serializes a `value`.
+
+        :param value:
+            Deserialized value.
+        :return:
+            Serialized value.
+        """
+        raise NotImplementedError  # pragma: nocover
+
+    def __repr__(self):  # pragma: nocover
+        return "{!s}<{}>".format(self.__class__.__name__, id(self))
+
+    def get(self, key):
+        value = self.child.get(key)
+        return None if value is None else self.loads(value)
+
+    def put(self, key, value):
+        self.child.put(key, self.dumps(value))
+
+    def query(self, pattern, limit=None, offset=0):
+        return ((k, self.loads(v)) for k, v in
+                self.child.query(pattern, limit, offset))
+
+
+class Serializer(SerializerShim):
+    """
+    Generic (de)serializer for `pickle`-style (de)serializer.
+
+    This can be used to wrap a store and perform (de)serialization
+    using any object which has a pair of ``loads`` and ``dumps``.
+    function attributes—like the ``pickle`` module from the Python
+    standard librart does:
+
+        >>> import pickle
+        >>> store = Serializer(DictStore(), pickle)
+
+    The following are known to work with :class:`Serializer` are:
+
+    * JSON using Python's built-in ``json`` module.
+    * `HiPack <http://hipack.org>`_, using the ``hipack`` module
+      from `hipack-python <http://github.com/aperezdc/hipack-python>`__.
+
+    :param Store store:
+        A store to be wrapped.
+    :param serializer:
+        An object with attributes ``loads`` and ``dumps`` with
+        the same API as those from the ``pickle`` module.
+    """
+    __slots__ = ("_serializer",)
+
+    def __init__(self, store, serializer):
+        super(Serializer, self).__init__(store)
+        self._serializer = serializer
+
+    def __repr__(self):  # pragma: nocover
+        return "{!s}({!r}, {!r})".format(self.__class__.__name__,
+                self.child, self._serializer)
+
+    def loads(self, value):
+        return self._serializer.loads(value)
+
+    def dumps(self, value):
+        return self._serializer.dumps(value)
+
+
+class BytesSerializer(SerializerShim):
+    """
+    A simple serializer which ensures values are of type `bytes`.
+
+    This serializer is mostly useful to ensure that values passed
+    down to a :class:`FSStore` are of type ``bytes``.
+    """
+    @staticmethod
+    def loads(value):
+        return value if not isinstance(value, bytes) else value.decode()
+
+    @staticmethod
+    def dumps(value):
+        return value if isinstance(value, bytes) else value.encode()

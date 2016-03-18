@@ -26,7 +26,9 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.4",
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python",
-            "Operating System :: OS Independent"
+            "Operating System :: OS Independent",
+            "License :: OSI Approved :: GPLv3",
+            "License :: OSI Approved :: Apache-2.0",
         ],
         test_suite="indicium.test",
     )

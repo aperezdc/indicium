@@ -7,7 +7,7 @@
 # Distributed under terms of the GPLv3 or, at your option,
 # under the terms of the Apache 2.0 license.
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 if __name__ == "__main__":
     setup(
@@ -18,7 +18,7 @@ if __name__ == "__main__":
         author_email="aperez@igalia.com",
         url="https://github.com/aperezdc/indicium",
         license=["GPLv3", "Apache-2.0"],
-        packages=find_packages(),
+        packages=["indicium", "indicium.test"],
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",
@@ -28,5 +28,5 @@ if __name__ == "__main__":
             "Programming Language :: Python",
             "Operating System :: OS Independent"
         ],
-        test_suite="test",
+        test_suite="indicium.test",
     )

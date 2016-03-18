@@ -19,6 +19,7 @@ if __name__ == "__main__":
         url="https://github.com/aperezdc/indicium",
         license=["GPLv3", "Apache-2.0"],
         packages=["indicium", "indicium.test"],
+        zip_safe=False,
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",

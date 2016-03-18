@@ -189,3 +189,51 @@ class TestDictCacheStore(unittest.TestCase,
         self.assertEqual("five", self.s.cache.get("/5"))
         self.assertEqual("five", self.s.child.get("/5"))
         self.assertEqual("five", self.s.get("/5"))
+
+
+class TestSerializer(TestStoreMethodsMixin, TestStoreOperationsMixin):
+    def setUp(self):
+        from indicium.base import Serializer, DictStore
+        self.d = DictStore()
+        self.s = Serializer(self.d, self.serializer)
+
+
+class TestJSONSerialization(TestSerializer, unittest.TestCase):
+    import json
+    serializer = json
+
+
+class TestPickleSerialization(TestSerializer, unittest.TestCase):
+    import pickle
+    serializer = pickle
+
+
+# This tests two nested serializers: first values are pickled,
+# and then the result from pickling is encoded to base64.
+from indicium.base import SerializerShim
+class Base64Serializer(SerializerShim):
+    @classmethod
+    def loads(cls, value):
+        from base64 import b64decode
+        return b64decode(value)
+
+    @classmethod
+    def dumps(cls, value):
+        from base64 import b64encode
+        return b64encode(value)
+
+class TestBase64PickledSerialization(TestSerializer, unittest.TestCase):
+    def setUp(self):
+        from indicium.base import DictStore, Serializer
+        import pickle
+        self.d = DictStore()
+        self.s = Serializer(Base64Serializer(self.d), pickle)
+
+
+# This abuses the XML-RPC serialization format... but it works
+from xmlrpc.client import dumps as xmlrpc_dumps, loads as xmlrpc_loads
+class XmlRpcSerializer(object):
+    dumps = lambda value: xmlrpc_dumps((value,))
+    loads = lambda value: xmlrpc_loads(value)[0][0]
+class TestXmlRpcSerialization(TestSerializer, unittest.TestCase):
+    serializer = XmlRpcSerializer

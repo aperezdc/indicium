@@ -89,8 +89,18 @@ class FSStore(Store):
         """Extension of data files."""
         return self._extension
 
+    def path_for_key(self, key):
+        """
+        Given a key, map it to a relative path in the file system.
+
+        :param str key: A key.
+        :return: A path under the store's root path.
+        :rtype: str
+        """
+        return P.join(*split(key)) + self._extension
+
     def get(self, key):
-        path = P.join(self._path, *split(key)) + self._extension
+        path = P.join(self._path, self.path_for_key(key))
         if not P.exists(path):
             return None
 
@@ -102,19 +112,19 @@ class FSStore(Store):
             return f.read()
 
     def put(self, key, value):
-        path = P.join(self._path, *split(key)) + self._extension
+        path = P.join(self._path, self.path_for_key(key))
         _ensure_directory(P.dirname(path))
         with open(path, "wb") as f:
             f.write(value)
 
     def delete(self, key):
         # TODO: Try to delete empty directories
-        path = P.join(self._path, *split(key)) + self._extension
+        path = P.join(self._path, self.path_for_key(key))
         if P.exists(path):
             remove(path)
 
     def contains(self, key):
-        path = P.join(self._path, *split(key)) + self._extension
+        path = P.join(self._path, self.path_for_key(key))
         return P.exists(path) and P.isfile(path)
 
     def query(self, pattern, limit=None, offset=0):

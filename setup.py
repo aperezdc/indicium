@@ -12,7 +12,7 @@ from setuptools import setup
 if __name__ == "__main__":
     setup(
         name="indicium",
-        version="0.1.0a2",
+        version="0.1.0a3",
         description="Generic interface to key-value stores",
         author="Adrián Pérez de Castro",
         author_email="aperez@igalia.com",

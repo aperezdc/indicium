@@ -54,7 +54,9 @@ and store somwthing that resembles an user account:
     account = filestore.get("/user/jdoe")
     assert account["email"] == "j@doe.org"
 
-The ``./data/user/jdoe.json`` will contain the account data in JSON format.
+The ``./data/user/jdoe.json`` file will contain the account data in JSON
+format.
+
 The following adds an in-memory cache to the above store, which holds up to
 100 elements, to speed up access to data:
 

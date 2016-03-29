@@ -31,8 +31,8 @@ __ http://indicium.readthedocs.org/en/latest/apiref.html#indicium.base.Serialize
 
 Support for additional storage system is by packages distributed separately:
 
-* ``indicium-git`` (planned, not yet available).
-* ``indicium-ldap`` (planned, not yet available).
+* `indicium-git <https://github.com/aperezdc/indicium-git>`_.
+* `indicium-ldap <https://github.com/aperezdc/indicium-ldap>`_.
 * ``indicium-leveldb`` (planned, not yet available).
 * ``indicium-memcache`` (planned, not yet available).
 

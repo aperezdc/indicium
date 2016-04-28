@@ -3,7 +3,7 @@
 ==========
 
 .. image:: https://readthedocs.org/projects/indicium/badge/?version=latest
-   :target: https://indicium.readthedocs.org/en/latest
+   :target: https://indicium.readthedocs.io/en/latest
    :alt: Documentation Status
 
 .. image:: https://img.shields.io/travis/aperezdc/indicium.svg?style=flat
@@ -24,10 +24,10 @@ This base package includes:
 * Simple `filesystem-based storage`__ using directories and plain files.
 * Adaptors for `transparent (de)serialization`__ of stored values.
 
-__ http://indicium.readthedocs.org/en/latest/apiref.html#indicium.cache.LRUCache
-__ http://indicium.readthedocs.org/en/latest/apiref.html#indicium.base.DictStore
-__ http://indicium.readthedocs.org/en/latest/apiref.html#indicium.fs.FSStore
-__ http://indicium.readthedocs.org/en/latest/apiref.html#indicium.base.Serializer
+__ http://indicium.readthedocs.io/en/latest/apiref.html#indicium.cache.LRUCache
+__ http://indicium.readthedocs.io/en/latest/apiref.html#indicium.base.DictStore
+__ http://indicium.readthedocs.io/en/latest/apiref.html#indicium.fs.FSStore
+__ http://indicium.readthedocs.io/en/latest/apiref.html#indicium.base.Serializer
 
 Support for additional storage system is by packages distributed separately:
 
